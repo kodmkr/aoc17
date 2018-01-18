@@ -1,0 +1,18 @@
+qwer (0) -> tknk, uiop, dfgh
+dfgh (70) -> yxcv, cvbn
+yxcv (350)
+cvbn (350)
+uiop (770)
+pbga (33) -> asdf
+asdf (33)
+xhth (57)
+havc (66)
+ktlj (57)
+fwft (72) -> ktlj, cntj, xhth
+qoyq (66)
+padx (45) -> pbga, havc, qoyq
+tknk (41) -> ugml, padx, fwft
+jptl (61)
+ugml (120) -> gyxo, jptl
+gyxo (61)
+cntj (57)

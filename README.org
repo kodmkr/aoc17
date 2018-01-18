@@ -1,0 +1,3 @@
+* Advent of Code in Common Lisp
+
+[[https://www.quicklisp.org/][Quicklisp]] is needed for ~split-sequence~ and ~cl-ppcre~.
