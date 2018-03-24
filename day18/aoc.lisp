@@ -10,6 +10,8 @@
 (defparameter +ctr+ "ctr")
 (defparameter +snd+ "snd")
 (defparameter +rcv+ "rcv")
+(defparameter +stat+ "stat")
+(defparameter +id+ "id")
 
 (defun reg-p (maybe-reg)
   "Registers are alphabetic characters."
@@ -26,7 +28,7 @@
            (l (length insns)))
       (make-array l :initial-contents insns))))
 
-(defun mk-env (insn-list)
+(defun mk-env (insn-list &optional id)
   "Make environment (HASH) with registers occurring in the program"
   (let ((env (make-hash-table :test #'equal)))
     (loop :for reg
@@ -37,9 +39,13 @@
                :collect reg)
             :test #'equal)
        :do (setf (gethash reg env) 0))
-    (setf (gethash +ctr+ env) 0)
-    (setf (gethash +rcv+ env) nil)
-    (setf (gethash +snd+ env) nil)
+    (setf (gethash +ctr+ env) 0
+          (gethash +rcv+ env) nil
+          (gethash +snd+ env) 0)
+    (when id
+      (setf (gethash "p" env) id
+            (gethash +id+ env) id
+            (gethash +stat+ env) t))
     env))
 
 (defun env-val (key env)
@@ -84,6 +90,15 @@
     (incf (env-val +ctr+ env))
     (values)))
 
+(defun op-jgz (env args)
+  (destructuring-bind (maybe-reg1 maybe-reg2) args
+    (let ((jmp-cond (value-of maybe-reg1 env))
+          (offset (value-of maybe-reg2 env)))
+      (incf (env-val +ctr+ env) (if (> jmp-cond 0)
+                                    offset
+                                    1)))
+    (values)))
+
 (defun op-snd (env args)
   (destructuring-bind (maybe-reg) args
     (push (value-of maybe-reg env) (env-val +snd+ env))
@@ -98,33 +113,66 @@
     (incf (env-val +ctr+ env))
     (values)))
 
-(defun op-jgz (env args)
-  (destructuring-bind (maybe-reg1 maybe-reg2) args
-    (let ((jmp-cond (value-of maybe-reg1 env))
-          (offset (value-of maybe-reg2 env)))
-      (incf (env-val +ctr+ env) (if (> jmp-cond 0)
-                                    offset
-                                    1)))
-    (values)))
-
-(defun mk-funcs (funcslist)
+(defun mk-funcs (funcslist &optional &key snd rcv)
   (let ((funcs (make-hash-table :test #'equal)))
     (loop for f in funcslist do
          (let* ((func-name (symbol-name f))
                 (suff (string-downcase (subseq func-name (1+ (position #\- func-name))))))
            (setf (gethash suff funcs) (symbol-function f))))
+    (when (and snd rcv)
+      (setf (gethash +snd+ funcs) snd
+            (gethash +rcv+ funcs) rcv))
     funcs))
 
 (defun run1 ()
   (let* ((prg (read-input "./input"))
          (env (mk-env prg))
-         (ops (mk-funcs '(op-add op-jgz op-mod op-mul op-rcv op-set op-snd))))
+         (ops (mk-funcs '(op-add op-jgz op-mod op-mul op-set op-rcv op-snd))))
     (loop while (not (env-val +rcv+ env)) do
          (let ((instr (aref prg (env-val +ctr+ env))))
            (funcall (gethash (car instr) ops) env (cdr instr))))
     (env-val +rcv+ env)))
 
+(defun send (env args oth-env)
+  (destructuring-bind (reg-or-immediate) args
+    (let ((val (value-of reg-or-immediate env)))
+      (setf (env-val +rcv+ oth-env) (nconc (env-val +rcv+ oth-env) (list val)))
+      (incf (env-val +ctr+ env))
+      (when (= 1 (env-val +id+ env))
+        (incf (env-val +snd+ env)))))
+  (values))
+
+(defun receive (env args)
+  (destructuring-bind (reg) args
+    (let ((q (env-val +rcv+ env)))
+      (if (null q)
+          (setf (env-val +stat+ env) nil)
+          (let ((val (pop (env-val +rcv+ env))))
+            (setf (env-val reg env) val
+                  (env-val +stat+ env) t)
+            (incf (env-val +ctr+ env))))))
+  (values))
+
+(defun run-both ()
+  (let* ((prg (read-input "./input"))
+         (env0 (mk-env prg 0))
+         (env1 (mk-env prg 1))
+         (ops (mk-funcs '(op-add op-jgz op-mod op-mul op-set) :snd #'send :rcv #'receive)))
+    (loop while (or (env-val +stat+ env0) (env-val +stat+ env1)) do
+         (let ((instr0 (aref prg (env-val +ctr+ env0)))
+               (instr1 (aref prg (env-val +ctr+ env1))))
+
+           (if (string= (car instr0) +snd+)
+               (funcall (gethash (car instr0) ops) env0 (cdr instr0) env1)
+               (funcall (gethash (car instr0) ops) env0 (cdr instr0)))
+           (if (string= (car instr1) +snd+)
+               (funcall (gethash (car instr1) ops) env1 (cdr instr1) env0)
+               (funcall (gethash (car instr1) ops) env1 (cdr instr1)))))
+    (env-val +snd+ env1)))
+
+
 (defun day-18-a ()
   (car (run1)))
 
-(defun day-18-b ())
+(defun day-18-b ()
+  (run-both))
