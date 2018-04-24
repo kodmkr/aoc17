@@ -64,9 +64,13 @@ a noticeable delay."
         (loop for x from 1 below count do
              (tick point-data))
         (return-from do-ticks point-data))
-      (let ((cpy (copy-seq point-data)))
-        (loop for x from 1 below count do
-             (setf cpy (funcall retainer (tick cpy))))
+      (let ((cpy (copy-seq point-data))
+            (stayed-times 0))
+        (loop while (< stayed-times 50) do
+             (let ((n-pts (funcall retainer (tick cpy))))
+               (when (= (array-dimension n-pts 0) (array-dimension cpy 0))
+                 (incf stayed-times))
+               (setf cpy n-pts)))
         (return-from do-ticks cpy))))
 
 (defun coincidep (p1 p2)
