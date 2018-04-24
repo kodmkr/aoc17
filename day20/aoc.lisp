@@ -7,8 +7,6 @@
 
 (in-package :day20)
 
-(defvar pts)
-
 (defstruct (point-data (:conc-name pts-))
   (pos (make-array 3 :element-type 'fixnum))
   (vel (make-array 3 :element-type 'fixnum))
@@ -58,16 +56,55 @@
        (update-points-data ptd))
   (sort-by-distance points-data))
 
-(defun do-ticks (point-data &optional (count 1000))
-  "Ticks COUNT times. COUNT is randomly set to 1000. This is quadratic, so there is
+(defun do-ticks (point-data &optional &key (count 500) retainer)
+  "Ticks COUNT times. COUNT is randomly set to 500. This is quadratic, so there is
 a noticeable delay."
-  (loop for x below count do
-       (tick point-data))
-  point-data)
+  (if (null retainer)
+      (progn
+        (loop for x from 1 below count do
+             (tick point-data))
+        (return-from do-ticks point-data))
+      (let ((cpy (copy-seq point-data)))
+        (loop for x from 1 below count do
+             (setf cpy (funcall retainer (tick cpy))))
+        (return-from do-ticks cpy))))
+
+(defun coincidep (p1 p2)
+  (let ((v1 (pts-pos p1))
+        (v2 (pts-pos p2)))
+    (and (= (svref v1 0) (svref v2 0))
+         (= (svref v1 1) (svref v2 1))
+         (= (svref v1 2) (svref v2 2)))))
+
+(defun find-next-different-pos (pt-datas &optional (start 0))
+  (let ((elt (aref pt-datas start)))
+    (position-if #'(lambda (x) (not (coincidep x elt)))
+                 pt-datas
+                 :start start)))
+
+(defun retain (pt-datas)
+  (let ((len (array-dimension pt-datas 0))
+        (start 0)
+        (retained nil))
+    (loop named lp do
+         (let ((nxt (find-next-different-pos pt-datas start)))
+           ;; (format t "[start:~d][nxt:~d]~%" start nxt)
+           (if (not (null nxt))
+               (if (= nxt (1+ start))
+                   (progn
+                     (push start retained)
+                     (setf start nxt))
+                   (setf start nxt))
+               (when (<= start (1- len))
+                 (push start retained)
+                 (return-from lp)))))
+    (make-array (length retained) :initial-contents
+                (loop for x in (nreverse retained) collect (aref pt-datas x)))))
 
 (defun day-20-a ()
-  (let* ((inp (read-input "./input")))
+  (let ((inp (read-input "./input")))
     (pts-idx (aref (do-ticks inp) 0))))
 
-
-(defun day-20-b ())
+(defun day-20-b ()
+  (let ((inp (read-input "./input")))
+    (array-dimension (do-ticks inp :retainer #'retain) 0)))
