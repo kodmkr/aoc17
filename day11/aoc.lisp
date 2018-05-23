@@ -1,4 +1,5 @@
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "cl-ppcre"))
 
 (defpackage :day11
   (:use :cl)
@@ -57,7 +58,7 @@
   (let* ((in (read-input "./input"))
          (vecs (translate-input in)))
     (travel vecs)))
- 
+
 (defun day-11-b ()
   (let* ((in (read-input "./input"))
          (vecs (translate-input in)))

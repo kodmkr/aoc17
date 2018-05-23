@@ -1,12 +1,13 @@
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "cl-ppcre"))
 
-(defpackage :day07
+(defpackage :day08
   (:use :cl)
   (:import-from :cl-ppcre :scan-to-strings :split)
   (:export :day-08-a
            :day-08-b))
 
-(in-package :day07)
+(in-package :day08)
 
 (defparameter *regex* "(\\w+)\\s*(\\w+)\\s*(-?\\d+)\\s*(\\w+)\\s*(\\w+)\\s*([=!<>]+)\\s*(-?\\d+)")
 

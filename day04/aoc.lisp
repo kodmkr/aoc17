@@ -1,4 +1,5 @@
-(ql:quickload "split-sequence")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "split-sequence"))
 
 (defpackage :day04
   (:use :cl :split-sequence)
@@ -11,7 +12,7 @@
   (let ((orig-len (length phrase-list))
         (dedup-len (length (remove-duplicates phrase-list :test #'string=))))
     (= orig-len dedup-len)))
-  
+
 (defun check-passphrases (in-path check)
   (with-open-file (in in-path)
     (loop for line = (read-line in nil) while line
@@ -27,7 +28,7 @@
        (if (some #'(lambda (x) (anagram-p head x)) rest)
            (return nil))
      finally (return t)))
-       
+
 
 (defun day-04-a ()
   (check-passphrases "./input.txt" #'passphrase-valid-p))

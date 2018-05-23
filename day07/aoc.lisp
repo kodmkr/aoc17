@@ -1,4 +1,5 @@
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "cl-ppcre"))
 
 (defpackage :day07
   (:use :cl)
@@ -49,7 +50,7 @@
 
 (defun tree-data-internals (tree-data)
   (remove-if #'(lambda (x) (leaf-p x)) tree-data))
-  
+
 (defun leaves (tree-data)
   (remove-if-not #'(lambda (x) (leaf-p x)) tree-data))
 
@@ -136,7 +137,7 @@
         (let* ((cause (first srtd))
                (diff (- (first (second srtd)) (first cause))))
           (values (+ (third cause) diff) (second cause) :up diff)))))
-          
+
 
 
 (defun day-07-a ()
@@ -149,4 +150,3 @@
          (tree (build-tree tree-data))
          (imb (find-imbalance tree)))
     (find-imbalance-cause imb)))
-         

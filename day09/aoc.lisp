@@ -1,4 +1,5 @@
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "cl-ppcre"))
 
 (defpackage :day09
   (:use :cl)
@@ -61,7 +62,7 @@
                     (if inside-garbage
                         (incf num-chars)
                         (setf inside-garbage t)))
-                   ((char= c +close-garbage+) 
+                   ((char= c +close-garbage+)
                     (setf inside-garbage nil))
                    (t (when inside-garbage
                         (incf num-chars)))))))

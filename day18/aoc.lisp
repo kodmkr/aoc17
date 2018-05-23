@@ -1,4 +1,5 @@
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "cl-ppcre"))
 
 (defpackage :day18
   (:use :cl)

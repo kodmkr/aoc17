@@ -1,4 +1,5 @@
-(load "../day10/aoc.lisp")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (load "../day10/aoc.lisp"))
 
 (defpackage :day14
   (:use :cl)
@@ -15,7 +16,7 @@
                            "1000" "1001" "1010" "1011"
                            "1100" "1101" "1110" "1111"))
 
-(defparameter *tab* exmp)
+(defvar *tab*)
 (defparameter *len* 128)
 (defparameter *side* (isqrt *len*))
 

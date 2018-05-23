@@ -1,4 +1,5 @@
-(ql:quickload "split-sequence")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "split-sequence"))
 
 (defpackage :day06
   (:use :cl :split-sequence)
