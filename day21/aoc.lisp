@@ -12,18 +12,13 @@
 
 (defvar *pattern* ".#./..#/###")
 
-(defvar *two* "../#.")
-
 (defun pat-size (pat)
-  (let ((rows (cl-ppcre:split "/" pat)))
-    (when (consp rows)
-      (length (car rows)))))
+  (let ((pos-sep (position-if #'(lambda (c) (char= c #\/)) pat)))
+    (when pos-sep
+      pos-sep)))
 
-(defun print-pat (pat)
-  (let ((rows (cl-ppcre:split "/" pat)))
-    (loop for row in rows do
-         (format t "~a~%" row))))
-
+;; maybe should just have used fact that a 90° rotation would be a mapcar over
+;; the list resulting from splitting the pattern at `/`
 (defmacro mk-transformation (pref perm)
   (let* ((pat (gensym "PAT"))
          (cnt (gensym "CNT"))
@@ -31,12 +26,12 @@
          (name (format nil "~a-sz-~d" pref (if (> perm-len 5) 3 2))))
     `(defun ,(intern (string-upcase name)) (,pat &optional (,cnt 1))
        (let* ((pat-len (length ,pat))
-              (res (make-string (length ,pat)))
+              (res (make-string pat-len :initial-element #\X))
               (tmp (copy-seq ,pat)))
          (dotimes (c ,cnt res)
            (loop :for i :below pat-len :for d :in ',perm :do
                 (setf (char res d) (char tmp i)))
-           (setf tmp res))))))
+           (setf tmp (copy-seq res)))))))
 
 (mk-transformation "rot" (1 4 2 0 3))
 (mk-transformation "rot" (2 6 10 3 1 5 9 7 0 4 8))
@@ -45,16 +40,6 @@
 
 (defun num-ons (pattern)
   (count-if #'(lambda (x) (char= x #\#)) pattern))
-
-;; (defun gen-variations (pattern)
-;;   (let ((variations nil))
-;;     (
-
-;; (defun read-input (input-path)
-;;   (with-open-file (in input-path)
-;;     (loop :for line = (read-line in nil) :while line :do
-
-
 
 
 (defun day-21-a ())
