@@ -55,6 +55,16 @@
                      (funcall rotator pattern (mod i 4)))))
    :test #'string=))
 
+(defun read-input (in-path)
+  (with-open-file (s in-path)
+    (loop for line = (read-line s nil) while line do
+         (destructuring-bind (left right) (cl-ppcre:split "\\s+=>\\s+" line)
+           (let ((grp (case (pat-size left)
+                        (2 (gen-grp left :rotator #'rot-sz-2 :flipper #'hflip-sz-2))
+                        (3 (gen-grp left :rotator #'rot-sz-3 :flipper #'hflip-sz-3)))))
+             (dolist (e grp *rules*)
+               (setf (gethash e *rules*) right)))))))
+
 
 
 (defun day-21-a ())
