@@ -11,7 +11,8 @@
 (defvar *rules* (make-hash-table :test #'equal))
 
 (defvar *pattern* ".#./..#/###")
-(defparameter *two* ".#/#.")
+(defparameter *test9* "abcdefghi/012345678/jklmnopqr/!{§$%&?()/stuvwxyzZ/<>|,.-;:_/ABCDEFGHI/JKLMNOPQR/+#*'üöä^°")
+(defparameter *test6* "abcdef/012345/ABCDEF/6789!?/GHIJKL/ZYXWVU")
 
 (defun pat-size (pat)
   (let ((pos-sep (position-if #'(lambda (c) (char= c #\/)) pat)))
@@ -56,6 +57,7 @@
    :test #'string=))
 
 (defun read-input (in-path)
+  (clrhash *rules*)
   (with-open-file (s in-path)
     (loop for line = (read-line s nil) while line do
          (destructuring-bind (left right) (cl-ppcre:split "\\s+=>\\s+" line)
@@ -65,7 +67,86 @@
              (dolist (e grp *rules*)
                (setf (gethash e *rules*) right)))))))
 
+(defun group-by (num seq)
+  "Groups NUM adjacent element in SEQ together.
+The length of SEQ _has_ to be a  multiple of NUM."
+  (when (plusp num)
+    (let* ((len (length seq))
+           (q (floor len num))
+           (grp nil))
+      (dotimes (i q (nreverse grp))
+        (push (subseq seq (* i num) (* (1+ i) num)) grp)))))
 
+(defun intersperse (lst sep)
+  (labels ((i-helper (lst sep acc)
+             (cond ((null lst) (nreverse acc))
+                   ((and (consp lst) (null (cdr lst)))
+                    (i-helper (cdr lst) sep (cons (car lst) acc)))
+                   (t (i-helper (cdr lst) sep (cons sep (cons (car lst) acc)))))))
+    (i-helper lst sep nil)))
+
+(defun join (strings &key (sep " "))
+  (let ((interspersed (intersperse strings sep)))
+    (apply #'concatenate 'string interspersed)))
+
+(defun split-pattern (pattern)
+  (let* ((pat-sz (pat-size pattern))
+         (num (if (evenp pat-sz) 2 3))
+         (rows (cl-ppcre:split "/" pattern))
+         (groups (group-by num rows)))
+    (labels ((reshape (num groups)
+               (loop for row in groups collect
+                    (loop for part in row collect
+                         (group-by num part)))))
+      (loop for group in (reshape num groups) nconc
+           (progn
+             (format t "[group:~a]~%" group)
+             (apply #'mapcar (if (= 3 num)
+                               #'(lambda (&rest args) (apply #'concatenate 'string ))
+                               #'(lambda (x y) (concatenate 'string x "/" y)))
+                  group))))))
+
+(defun match-rules (patterns rules)
+  (let ((patlist (if (listp patterns) patterns (list patterns))))
+    (loop for pat in patlist collect
+         (gethash pat rules))))
+
+(defun join-patterns (patterns)
+  (when (= 1 (length patterns)) ;; some ad-hoc optimization
+    (return-from join-patterns (car patterns)))
+  (let* ((split (loop for pattern in patterns collect
+                     (cl-ppcre:split "/" pattern)))
+         (len-split (length split))
+         (num (if (evenp len-split) 2 3))
+         (grouped (group-by (isqrt len-split) split)))
+    (apply #'concatenate 'string
+           (intersperse (loop for group in grouped nconc
+                             (apply #'mapcar
+                                    (if (= 3 num) ;; TODO
+                                        #'(lambda (x y z) (concatenate 'string x y z))
+                                        #'(lambda (x y) (concatenate 'string x y)))
+                                    group))
+                        "/"))))
+
+(defun do-step (pattern rules &optional (cnt 1))
+  (let ((curr-pat pattern))
+    (dotimes (i cnt curr-pat)
+      (setf curr-pat (join-patterns
+                      (match-rules (split-pattern curr-pat) rules))))))
+
+
+
+;;   012345678
+;;   ---------
+;;  0|abcdefghi
+;;  1|012345678
+;;  2|jklmnopqr
+;;  3|!{§$%&?()
+;;  4|stuvwxyzZ
+;;  5|<>|,.-;:_
+;;  6|ABCDEFGHI
+;;  7|JKLMNOPQR
+;;  8|+#*'üöä^°
 
 (defun day-21-a ())
 (defun day-21-b ())
