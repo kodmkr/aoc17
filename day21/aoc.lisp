@@ -12,16 +12,14 @@
 (defvar *rules* (make-hash-table :test #'equal))
 
 (defvar *pattern* ".#./..#/###")
-(defparameter *test9* "abcdefghi/012345678/jklmnopqr/!{§$%&?()/stuvwxyzZ/<>|,.-;:_/ABCDEFGHI/JKLMNOPQR/+#*'üöä^°")
-(defparameter *test6* "abcdef/012345/ABCDEF/6789!?/GHIJKL/ZYXWVU")
 
 (defun pat-size (pat)
-  (let ((pos-sep (position-if #'(lambda (c) (char= c #\/)) pat)))
+  (let ((pos-sep (position-if (lambda (c) (char= c #\/)) pat)))
     (when pos-sep
       pos-sep)))
 
 (defun num-ons (pattern)
-  (count-if #'(lambda (x) (char= x #\#)) pattern))
+  (count-if (lambda (x) (char= x #\#)) pattern))
 
 ;; maybe should just have used fact that a 90° rotation would be a mapcar over
 ;; the list resulting from splitting the pattern at `/`
@@ -66,7 +64,8 @@
                         (2 (gen-grp left :rotator #'rot-sz-2 :flipper #'hflip-sz-2))
                         (3 (gen-grp left :rotator #'rot-sz-3 :flipper #'hflip-sz-3)))))
              (dolist (e grp *rules*)
-               (setf (gethash e *rules*) right)))))))
+               (setf (gethash e *rules*) right))))))
+  *rules*)
 
 (defun group-by (num seq)
   "Groups NUM adjacent element in SEQ together.
@@ -84,29 +83,53 @@ The length of SEQ _has_ to be a  multiple of NUM."
          (split-pattern (cl-ppcre:split "/" pattern))
          (groups (group-by side-len split-pattern))
          (split-groups (loop for group in groups collect
-                            (mapcar #'(lambda (x)
-                                        (group-by side-len x))
+                            (mapcar (lambda (x) (group-by side-len x))
                                     group))))
     (labels ((concat (x y)
                (concatenate 'string x "/" y)))
-      (loop for split-group in split-groups collect
-           (reduce #'(lambda (f r) (mapcar #'concat f r)) split-group)))))
+      (loop for split-group in split-groups nconc
+           (reduce (lambda (f r) (mapcar #'concat f r)) split-group)))))
+
+(defun match-rules (patterns)
+  (mapcar (lambda (x) (gethash x *rules*)) patterns))
+
+;; maybe split-pattern and join-patterns
+;; can be combined into one function
+;; one being the "inverse" of the other
+(defun join-patterns (patterns)
+  (when (= 1 (length patterns))
+    (return-from join-patterns (car patterns)))
+  (let* ((side-len (isqrt (length patterns)))
+         (split-patterns
+          (mapcar (lambda (pattern)
+                      (cl-ppcre:split "/" pattern))
+                  patterns))
+         (grouped (group-by side-len split-patterns)))
+    (labels ((zip (xs ys &key (sep ""))
+               (mapcar (lambda (x y) (concatenate 'string x sep y)) xs ys)))
+      (reduce #'(lambda (xs ys) (concatenate 'string xs "/" ys))
+              (loop for group in grouped nconc
+                   (reduce #'zip group))))))
 
 
+(defun do-step (&optional (count 1))
+  (let ((pattern *pattern*))
+    (loop for i below count do
+         (-<> pattern
+              (split-pattern <>)
+              (match-rules <>)
+              (join-patterns <>)
+              (setf pattern <>)))
+    pattern))
 
+(defun count-on (pattern)
+  (count-if (lambda (c) (char= c #\#)) pattern))
 
+(defun day-21-a ()
+  (read-input "./input")
+  (count-on (do-step 5)))
 
-;;   012345678
-;;   ---------
-;;  0|abcdefghi
-;;  1|012345678
-;;  2|jklmnopqr
-;;  3|!{§$%&?()
-;;  4|stuvwxyzZ
-;;  5|<>|,.-;:_
-;;  6|ABCDEFGHI
-;;  7|JKLMNOPQR
-;;  8|+#*'üöä^°
-
-(defun day-21-a ())
-(defun day-21-b ())
+;; takes about a minute...
+(defun day-21-b ()
+  (read-input "./input")
+  (count-on (do-step 18)))
