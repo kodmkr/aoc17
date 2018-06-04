@@ -1,8 +1,9 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (ql:quickload "cl-ppcre"))
+  (ql:quickload "cl-ppcre")
+  (ql:quickload "cl-arrows"))
 
 (defpackage :day21
-  (:use :cl)
+  (:use :cl :cl-arrows)
   (:export :day-21-a
            :day-21-b))
 
@@ -77,62 +78,21 @@ The length of SEQ _has_ to be a  multiple of NUM."
       (dotimes (i q (nreverse grp))
         (push (subseq seq (* i num) (* (1+ i) num)) grp)))))
 
-(defun intersperse (lst sep)
-  (labels ((i-helper (lst sep acc)
-             (cond ((null lst) (nreverse acc))
-                   ((and (consp lst) (null (cdr lst)))
-                    (i-helper (cdr lst) sep (cons (car lst) acc)))
-                   (t (i-helper (cdr lst) sep (cons sep (cons (car lst) acc)))))))
-    (i-helper lst sep nil)))
-
-(defun join (strings &key (sep " "))
-  (let ((interspersed (intersperse strings sep)))
-    (apply #'concatenate 'string interspersed)))
-
 (defun split-pattern (pattern)
-  (let* ((pat-sz (pat-size pattern))
-         (num (if (evenp pat-sz) 2 3))
-         (rows (cl-ppcre:split "/" pattern))
-         (groups (group-by num rows)))
-    (labels ((reshape (num groups)
-               (loop for row in groups collect
-                    (loop for part in row collect
-                         (group-by num part)))))
-      (loop for group in (reshape num groups) nconc
-           (progn
-             (format t "[group:~a]~%" group)
-             (apply #'mapcar (if (= 3 num)
-                               #'(lambda (&rest args) (apply #'concatenate 'string ))
-                               #'(lambda (x y) (concatenate 'string x "/" y)))
-                  group))))))
+  (let* ((pat-size (pat-size pattern))
+         (side-len (if (evenp pat-size) 2 3))
+         (split-pattern (cl-ppcre:split "/" pattern))
+         (groups (group-by side-len split-pattern))
+         (split-groups (loop for group in groups collect
+                            (mapcar #'(lambda (x)
+                                        (group-by side-len x))
+                                    group))))
+    (labels ((concat (x y)
+               (concatenate 'string x "/" y)))
+      (loop for split-group in split-groups collect
+           (reduce #'(lambda (f r) (mapcar #'concat f r)) split-group)))))
 
-(defun match-rules (patterns rules)
-  (let ((patlist (if (listp patterns) patterns (list patterns))))
-    (loop for pat in patlist collect
-         (gethash pat rules))))
 
-(defun join-patterns (patterns)
-  (when (= 1 (length patterns)) ;; some ad-hoc optimization
-    (return-from join-patterns (car patterns)))
-  (let* ((split (loop for pattern in patterns collect
-                     (cl-ppcre:split "/" pattern)))
-         (len-split (length split))
-         (num (if (evenp len-split) 2 3))
-         (grouped (group-by (isqrt len-split) split)))
-    (apply #'concatenate 'string
-           (intersperse (loop for group in grouped nconc
-                             (apply #'mapcar
-                                    (if (= 3 num) ;; TODO
-                                        #'(lambda (x y z) (concatenate 'string x y z))
-                                        #'(lambda (x y) (concatenate 'string x y)))
-                                    group))
-                        "/"))))
-
-(defun do-step (pattern rules &optional (cnt 1))
-  (let ((curr-pat pattern))
-    (dotimes (i cnt curr-pat)
-      (setf curr-pat (join-patterns
-                      (match-rules (split-pattern curr-pat) rules))))))
 
 
 
