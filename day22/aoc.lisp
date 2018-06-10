@@ -33,7 +33,7 @@
            (loop for j below cols do
                 (let ((idx (idx-from-coords i j)))
                   (when (infp idx)
-                    (setf (gethash (tr-cpx i j) *positions*) t)))))
+                    (setf (gethash (tr-cpx i j) *positions*) :I)))))
       (values *positions* (tr-cpx (floor max-r 2) (floor max-c 2))))))
 
 (defstruct (state (:conc-name st-))
@@ -55,13 +55,31 @@
         (progn
           (remhash pos *positions*)
           nil)
-        (setf (gethash pos *positions*) t))))
+        (setf (gethash pos *positions*) :I))))
+
+(defun progression (pos)
+  (multiple-value-bind (val present?)
+      (gethash pos *positions*)
+    (symbol-macrolet ((hpos (gethash pos *positions*)))
+      (if (not present?)
+          (setf hpos :W)
+          (case val
+            (:W (setf hpos :I))
+            (:I (setf hpos :F))
+            (:F (remhash pos *positions*)))))))
 
 (defun infectedp (pos)
-  (multiple-value-bind (inf? present?)
+  (multiple-value-bind (state present?)
       (gethash pos *positions*)
     (when present?
-      inf?)))
+      (eq state :I))))
+
+(defun cell-state (pos)
+  (multiple-value-bind (val present?)
+      (gethash pos *positions*)
+    (unless present?
+      (return-from cell-state :C))
+    val))
 
 (defun go-in-dir (state)
   (setf (st-position state) (+ (st-position state) (st-direction state))))
@@ -72,21 +90,27 @@
 (defun turn-right (state)
   (setf (st-direction state) (* (st-direction state) #c(0 -1))))
 
-(defun burst (state &optional (cnt 1))
+(defun reverse-dir (state)
+  (setf (st-direction state) (* (st-direction state) -1)))
+
+(defun burst (state &key (cnt 1) infection-strategy)
   (dotimes (i cnt state)
     (let ((curr-pos (st-position state)))
-      (if (infectedp curr-pos)
-          (turn-right state)
-          (turn-left state))
-      (when (toggle-infected (st-position state))
+      (case (cell-state curr-pos)
+        (:C (turn-left state))
+        (:I (turn-right state))
+        (:F (reverse-dir state)))
+      (when (eq (funcall infection-strategy (st-position state)) :I)
         (incf (st-num-infected state)))
       (go-in-dir state)))
   state)
 
 (defun day-22-a (&key (cnt 10000) (input "./input"))
   (-<> (init input)
-       (burst <> cnt)
+       (burst <> :cnt cnt :infection-strategy #'toggle-infected)
        (st-num-infected <>)))
 
-
-(defun day-22-b ())
+(defun day-22-b (&key (cnt 10000000) (input "./input"))
+  (-<> (init input)
+       (burst <> :cnt cnt :infection-strategy #'progression)
+       (st-num-infected <>)))
