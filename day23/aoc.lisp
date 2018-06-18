@@ -65,7 +65,6 @@
   (declare (special counter))
   (incf counter (if (not (zerop (value vr))) (value wr) 1)))
 
-
 ;; ======================================================================
 
 (defun day-23-a ()
@@ -91,7 +90,7 @@
     (init)
     (setf (gethash #\a *registers*) 1)
     (loop while (< counter plen) do
-         (format t "[counter:~a]~%" counter)
+         ;; (format t "[counter:~a]~%" counter)
          (destructuring-bind (f op1 op2) (aref program counter)
            (funcall f op1 op2))))
   (gethash #\h *registers*))

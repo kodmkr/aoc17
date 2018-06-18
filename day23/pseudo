@@ -1,0 +1,37 @@
+
+b = 65
+c = b
+if (a != 0) then
+   b = b * 100
+   b = b - (-100000)
+   c = b
+   c = c - (-17000)
+endif
+while (true)
+   f = 1
+   d = 2
+   dowhile( g != 0 )
+       e = 2
+       dowhile (g != 0)
+           g = d
+           g = g * e
+           g = g - b
+           if ( g == 0 ) then
+              f = 0
+           e = e - (-1)
+           g = e
+           g = g - b
+       enddowhile
+       d = d - (-1)
+       g = d
+       g = g - b
+   enddowhile
+   if ( f == 0 ) then
+      h = h - (-1)
+   endif
+   g = b
+   g = g - c
+   if ( g == 0 ) then
+      BREAK
+   endif
+endwhile
