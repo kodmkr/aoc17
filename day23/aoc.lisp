@@ -65,8 +65,6 @@
   (declare (special counter))
   (incf counter (if (not (zerop (value vr))) (value wr) 1)))
 
-;; ======================================================================
-
 (defun day-23-a ()
   (let* ((program (read-input "./input"))
          (plen (array-dimension program 0))
@@ -80,17 +78,15 @@
            (funcall f op1 op2)))
     mulcnt))
 
+;; see the file `pseudo` for an explanation of the code
 (defun day-23-b ()
-  (let* ((program (read-input "./input"))
-         (plen (array-dimension program 0))
-         (counter 0)
-         (mulcnt 0))
-    (declare (special counter))
-    (declare (special mulcnt))
-    (init)
-    (setf (gethash #\a *registers*) 1)
-    (loop while (< counter plen) do
-         ;; (format t "[counter:~a]~%" counter)
-         (destructuring-bind (f op1 op2) (aref program counter)
-           (funcall f op1 op2))))
-  (gethash #\h *registers*))
+  (labels ((primep (num)
+             (cond ((= num 1) nil)
+                   ((evenp num) nil)
+                   (t (loop for x from 3 to (isqrt num) by 2
+                         if (zerop (mod num x)) return nil
+                         finally (return t))))))
+    (loop with cnt = 0
+       for x from 106500 to 123500 by 17 do
+         (when (not (primep x)) (incf cnt))
+       finally (return cnt))))

@@ -16,8 +16,9 @@ while (true)
 |   |   /   g = d
 |   |   |   g = g * e
 |   |   |   g = g - b
-|   |   |   if ( g == 0 ) then  // if b = d*e set flag f
-|   |   |      f = 0
+|   |   |   if ( g == 0 )       // if b = d*e set flag f
+|   |   |       f = 0
+|   |   |   endif
 |   |   |   e = e + 1           // checks if e <= b
 |   |   |   g = e               //
 |   |   \   g = g - b           //
@@ -26,12 +27,12 @@ while (true)
 |   |   g = d                   //
 |   \   g = g - b               //
 |   enddowhile
-|   if ( f == 0 ) then
-|      h = h + 1
+|   if ( f == 0 )
+|       h = h + 1
 |   endif
 |   g = b
 |   g = g - c
-|   if ( g == 0 ) then
+|   if ( g == 0 )               // checks range [106500..123500] in increments of 17
 |      BREAK
 |   endif
 \   b = b + 17
