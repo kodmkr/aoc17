@@ -2,36 +2,37 @@
 b = 65
 c = b
 if (a != 0) then
-   b = b * 100
-   b = b - (-100000)
-   c = b
-   c = c - (-17000)
+   b = b * 100                  // b = 6500
+   b = b + 100000               // b = 106500
+   c = b                        // c = 106500
+   c = c + 17000                // c = 123500
 endif
 while (true)
-   f = 1
-   d = 2
-   dowhile( g != 0 )
-       e = 2
-       dowhile (g != 0)
-           g = d
-           g = g * e
-           g = g - b
-           if ( g == 0 ) then
-              f = 0
-           e = e - (-1)
-           g = e
-           g = g - b
-       enddowhile
-       d = d - (-1)
-       g = d
-       g = g - b
-   enddowhile
-   if ( f == 0 ) then
-      h = h - (-1)
-   endif
-   g = b
-   g = g - c
-   if ( g == 0 ) then
-      BREAK
-   endif
+/   f = 1
+|   d = 2
+|   dowhile( g != 0 )           // d is incremented
+|   /   e = 2
+|   |   dowhile ( g != 0 )      // e is incremented
+|   |   /   g = d
+|   |   |   g = g * e
+|   |   |   g = g - b
+|   |   |   if ( g == 0 ) then  // if b = d*e set flag f
+|   |   |      f = 0
+|   |   |   e = e + 1           // checks if e <= b
+|   |   |   g = e               //
+|   |   \   g = g - b           //
+|   |   enddowhile
+|   |   d = d + 1               // checks if d <= b
+|   |   g = d                   //
+|   \   g = g - b               //
+|   enddowhile
+|   if ( f == 0 ) then
+|      h = h + 1
+|   endif
+|   g = b
+|   g = g - c
+|   if ( g == 0 ) then
+|      BREAK
+|   endif
+\   b = b + 17
 endwhile
